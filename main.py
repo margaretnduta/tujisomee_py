@@ -44,10 +44,10 @@ class Tujisomee(App):
         return layout
 
     def button_click_audio_a(self, instance):
-        play_sounds() 
+        play_sounds("./mp3/a.mp3")
 
     def button_click_audio_b(self, instance):
-        play_sounds()
+        play_sounds("./mp3/b.mp3")
 
     def button_count(self, instance):
         

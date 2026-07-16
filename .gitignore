@@ -1,5 +1,8 @@
 #compiled files
-__pycache__
+__pycache__/
 *.pyc
 
 .env
+# virtual environment
+
+kivy_venv
