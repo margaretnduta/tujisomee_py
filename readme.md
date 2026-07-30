@@ -1,84 +1,127 @@
-# Tujisomee
+# 🎈 Tujisomee Phonics
 
-*Tujisomee* — Swahili for "let's read together" — is an early-stage Kivy
-(Python) app prototype for an offline learning tool aimed at helping young
-kids in Kenya learn through sound and repetition.
+**Tujisomee Phonics** is a vibrant, interactive, and child-friendly educational application built with Python and Kivy. Designed specifically for early childhood learning, the app helps young children learn letter sounds (A–Z) through engaging visuals, satisfying tactile animations, and instant audio feedback.
 
-This is an early prototype. Two buttons currently play audio and track
-click count as a proof of concept for the tap-to-hear interaction pattern
-the full app will be built around.
+---
 
-## Status
+## ✨ Features
 
-🚧 **Early prototype** — core interaction (tap a button, hear a sound,
-track engagement) is working. Not yet tied to real lesson content.
+- **📱 Interactive Slideshow Mode:** Large, easy-to-read letter cards that focus a child's attention on one letter at a time.
+- **🔊 Instant Phonics Playback:** Audio automatically plays when sliding to a new letter or tapping the card.
+- **🎨 Kid-Friendly UI/UX:** Warm pastel color palettes, soft rounded corners, and clear visual contrast designed for toddlers and young children.
+- **✨ Bounce Tap Animations:** Satisfying tactile visual feedback whenever a card or navigation button is pressed.
+- **👈 Modern Floating Controls:** Sleek side navigation arrows (< and >) that maximize screen space for the interactive cards.
+- **🌍 Scalable Architecture:** Built with multilingual support in mind, allowing effortless expansion to languages like Swahili, Spanish, French, and more.
 
-## Requirements
+---
 
-- Python 3.9+
-- [Kivy](https://kivy.org/)
-- An audio playback method (currently `playsound`, referenced via `mp3.py`)
+## 📁 Project Structure
 
+```text
+Tujisomee/
+│
+├── main.py              # Main Kivy application & UI layout
+├── mp3.py               # Asynchronous audio loader utility
+├── generate_audio.py    # Helper script to automatically generate A-Z speech files
+├── requirements.txt     # Python dependency list
+├── README.md            # Project documentation
+└── mp3/                 # Audio assets directory
+    ├── a.mp3
+    ├── b.mp3
+    └── ... (up to z.mp3)
+
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+
+Ensure you have **Python 3.9+** installed on your system.
+
+### 2. Installation & Setup
+
+1. **Clone the repository:**
 ```bash
-pip install kivy playsound
-```
-
-## Project structure
+git clone [https://github.com/your-username/Tujisomee.git](https://github.com/your-username/Tujisomee.git)
+cd Tujisomee
 
 ```
-tujisomee/
-├── main.py            # the Kivy App — UI, buttons, click tracking
-├── mp3.py             # audio playback helper (play_sounds)
-├── requirements.txt
-└── sounds/            # audio files referenced by play_sounds()
-    ├── button_a.mp3
-    └── button_b.mp3
+
+
+2. **Set up a virtual environment (Recommended):**
+```bash
+# Windows
+python -m venv kivy_venv
+kivy_venv\Scripts\activate
+
+# Mac/Linux
+python3 -m venv kivy_venv
+source kivy_venv/bin/activate
+
 ```
 
-## Running it
+
+3. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+
+```
+
+
+4. **Generate missing A-Z audio files (Optional):**
+If you need to generate or update the default English audio files:
+```bash
+pip install gTTS
+python generate_audio.py
+
+```
+
+
+
+---
+
+## 🎮 Running the Application
+
+To start the app, simply execute:
 
 ```bash
 python main.py
+
 ```
 
-You should see:
-- Two static welcome labels
-- A counter label (starts at `0`)
-- **Play Sound A** and **Play Sound B** buttons — each plays a sound and
-  increments the counter
+---
 
-## Known issues / next fixes
+## 🛠️ Tech Stack & Dependencies
 
-- [ ] `play_sounds()` currently takes no arguments, so both buttons trigger
-      identical behavior. It needs a file path argument so each button
-      plays its own distinct sound.
-- [ ] No real audio files exist yet in `sounds/` — placeholders or real
-      recordings need to be added and wired up.
-- [ ] `playsound` blocks the app while audio plays. Consider switching to
-      Kivy's own `kivy.core.audio.SoundLoader`, which is non-blocking and
-      packages more reliably for Android via Buildozer.
-- [ ] `self.count` currently counts total clicks across both buttons
-      combined — decide whether it should track something more meaningful
-      (e.g. sounds heard, letters practiced) as real content is added.
+* **Language:** Python
+* **GUI Framework:** [Kivy](https://kivy.org/) (Core layouts, Carousel, Animations, Canvas instructions)
+* **Audio Engine:** `kivy.core.audio` (Non-blocking, cross-platform audio playback)
+* **TTS Generator:** `gTTS` (Google Text-to-Speech for automated asset generation)
 
-## Roadmap
+---
 
-1. Fix `play_sounds()` to accept a filepath and wire each button to its own
-   sound
-2. Add real audio content to `sounds/`
-3. Swap `playsound` → `SoundLoader`
-4. Replace hardcoded buttons with content driven by a simple JSON file
-   (letter/word/sound), so new lessons don't require code changes
-5. Add basic progress tracking (local SQLite) so progress persists between
-   app runs
-6. Test on a real low-end Android device
-7. Package with [Buildozer](https://github.com/kivy/buildozer) into an
-   installable `.apk`
+## 🛣️ Roadmap & Future Enhancements
 
-## Why this matters
+* [x] Single-card slideshow layout with side navigation
+* [x] Custom rounded button styling & pastel palettes
+* [x] Interactive tap bounce animations
+* [ ] **Multilingual Toggle:** One-tap switching between English, Swahili, and other regional languages
+* [ ] **"Find the Letter" Quiz Mode:** Fun audio-guided interactive mini-game for kids
+* [ ] **Custom Mascot & Illustrated Backgrounds:** Adding friendly animal characters and nature themes
+* [ ] **Mobile Packaging:** Android (`.apk`) compilation via Buildozer
 
-Many early-grade classrooms in Kenya are under-resourced and short on
-trained teachers, particularly in rural areas. An offline-first phone app
-that repeats letter/word sounds as often as a child needs — without
-requiring mobile data — can meaningfully support phonics practice both in
-and out of the classroom.
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+
+```
+
+---
+
+Whenever you're ready to continue building, let me know if we should jump into **Feature 2: Multilingual Language Toggle**!
+
+```
