@@ -4,5 +4,8 @@ __pycache__/
 
 .env
 # virtual environment
-
 kivy_venv
+# PyInstaller / Build outputs
+dist/
+build/
+*.spec
