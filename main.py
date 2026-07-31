@@ -4,6 +4,8 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.carousel import Carousel
 from kivy.graphics import Color, RoundedRectangle
 from kivy.core.window import Window
@@ -65,37 +67,27 @@ class Tujisomee(App):
             (1.00, 0.60, 0.25, 1),  # Orange
         ]
 
-        # Root layout for overlaying floating controls
-        root_layout = FloatLayout()
-
-        # Main Vertical Container
-        content_box = BoxLayout(
-            orientation="vertical",
-            spacing=10,
-            padding=[60, 15, 60, 20],
-            size_hint=(1, 1),
-            pos_hint={"x": 0, "y": 0}
+        # Main Vertical Layout
+        self.main_layout = BoxLayout(
+            orientation="vertical", spacing=10, padding=[20, 15, 20, 15]
         )
 
-        # --- 1. TOP BAR: TITLE + LANGUAGE TOGGLE ---
-        top_bar = BoxLayout(orientation="horizontal", size_hint_y=0.15, spacing=10)
+        # --- 1. HEADER WITH LANGUAGE TOGGLE ---
+        header_box = BoxLayout(orientation="horizontal", size_hint_y=0.14, spacing=10)
 
-        # Title Label
         self.title_label = Label(
-            text="Tujisomee Phonics",
-            font_size=30,
+            text="Tujisomee Phonics 🎈",
+            font_size=24,
             bold=True,
-            color=(0.12, 0.3, 0.5, 1),
-            size_hint_x=0.6,
+            color=(0.1, 0.3, 0.5, 1),
+            size_hint_x=0.5,
             halign="left"
         )
 
-        # Language Toggle Container
-        lang_box = BoxLayout(spacing=8, size_hint_x=0.4)
-
+        lang_box = BoxLayout(spacing=8, size_hint_x=0.5)
         self.btn_en = KidButton(
             bg_color=(0.2, 0.5, 0.8, 1),
-            text="English",
+            text="English 🇬🇧",
             font_size=12,
             bold=True,
             radius=10
@@ -103,8 +95,8 @@ class Tujisomee(App):
         self.btn_en.bind(on_release=lambda btn: self.switch_language("en", btn))
 
         self.btn_sw = KidButton(
-            bg_color=(0.6, 0.6, 0.6, 0.6),  # Muted color when inactive
-            text="Swahili",
+            bg_color=(0.6, 0.6, 0.6, 0.6),
+            text="Swahili 🇰🇪",
             font_size=12,
             bold=True,
             radius=10
@@ -114,79 +106,164 @@ class Tujisomee(App):
         lang_box.add_widget(self.btn_en)
         lang_box.add_widget(self.btn_sw)
 
-        top_bar.add_widget(self.title_label)
-        top_bar.add_widget(lang_box)
-        content_box.add_widget(top_bar)
+        header_box.add_widget(self.title_label)
+        header_box.add_widget(lang_box)
+        self.main_layout.add_widget(header_box)
 
-        # --- 2. CAROUSEL SLIDESHOW ---
+        # Subtitle
+        self.subtitle_label = Label(
+            text="Tap any letter sound below to listen! 🔊",
+            font_size=14,
+            color=(0.3, 0.4, 0.6, 1),
+            size_hint_y=0.05
+        )
+        self.main_layout.add_widget(self.subtitle_label)
+
+        # --- 2. VIEW MODE TOGGLE (GRID / CARD) ---
+        toggle_box = BoxLayout(
+            orientation="horizontal", size_hint_y=0.08, spacing=15, padding=[40, 0]
+        )
+        self.grid_mode_btn = KidButton(
+            bg_color=(0.2, 0.6, 0.85, 1),
+            text="⣿ Grid View",
+            font_size=14,
+            bold=True,
+            radius=12,
+        )
+        self.grid_mode_btn.bind(on_release=lambda x: self.switch_view("grid"))
+
+        self.card_mode_btn = KidButton(
+            bg_color=(0.7, 0.7, 0.8, 1),
+            text="🎴 Card View",
+            font_size=14,
+            bold=True,
+            radius=12,
+        )
+        self.card_mode_btn.bind(on_release=lambda x: self.switch_view("card"))
+
+        toggle_box.add_widget(self.grid_mode_btn)
+        toggle_box.add_widget(self.card_mode_btn)
+        self.main_layout.add_widget(toggle_box)
+
+        # --- 3. MAIN CONTENT AREA ---
+        self.content_area = BoxLayout(orientation="vertical", size_hint_y=0.73)
+        self.main_layout.add_widget(self.content_area)
+
+        self.current_view = "grid"
+        self.grid_view = self.create_grid_view()
+        self.card_view = self.create_card_view()
+        self.content_area.add_widget(self.grid_view)
+
+        return self.main_layout
+
+    def create_grid_view(self):
+        """ Creates Grid View containing all A-Z sound buttons """
+        scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False)
+        grid = GridLayout(cols=5, spacing=12, padding=[10, 10, 10, 10], size_hint_y=None)
+        grid.bind(minimum_height=grid.setter("height"))
+
+        for i, letter in enumerate(self.letters):
+            color_choice = self.colors[i % len(self.colors)]
+            btn = KidButton(
+                bg_color=color_choice,
+                text=letter,
+                font_size=36,
+                bold=True,
+                color=(1, 1, 1, 1),
+                radius=18,
+                size_hint_y=None,
+                height=95,
+            )
+            btn.bind(on_release=lambda instance, l=letter: self.play_letter_sound(l, instance))
+            grid.add_widget(btn)
+
+        scroll.add_widget(grid)
+        return scroll
+
+    def create_card_view(self):
+        """ Creates Slideshow Carousel view """
+        card_layout = BoxLayout(orientation="vertical", spacing=10)
+
         self.carousel = Carousel(direction="right", loop=True, size_hint_y=0.85)
         self.carousel.bind(index=self.on_slide_change)
 
         for i, letter in enumerate(self.letters):
             color_choice = self.colors[i % len(self.colors)]
-            card_box = BoxLayout(padding=[50, 10, 50, 10])
+            card_box = BoxLayout(padding=[30, 10, 30, 10])
 
             btn = KidButton(
                 bg_color=color_choice,
                 text=letter,
-                font_size=150,
+                font_size=140,
                 bold=True,
                 color=(1, 1, 1, 1),
-                radius=35
+                radius=25,
             )
-            btn.bind(on_release=self.on_card_tap)
+            btn.bind(on_release=lambda instance, l=letter: self.play_letter_sound(l, instance))
 
             card_box.add_widget(btn)
             self.carousel.add_widget(card_box)
 
-        content_box.add_widget(self.carousel)
-        root_layout.add_widget(content_box)
+        card_layout.add_widget(self.carousel)
 
-        # --- 3. SIDE NAVIGATION CONTROLS WITH BOUNCE FX ---
-        self.prev_btn = KidButton(
-            bg_color=(0.2, 0.4, 0.7, 0.8),
-            text="<",
-            font_size=32,
+        nav_layout = BoxLayout(orientation="horizontal", spacing=20, size_hint_y=0.15)
+        prev_btn = KidButton(
+            bg_color=(0.3, 0.6, 0.9, 1),
+            text="◀ Previous",
+            font_size=16,
             bold=True,
-            color=(1, 1, 1, 1),
-            radius=20,
-            size_hint=(0.08, 0.16),
-            pos_hint={"x": 0.02, "center_y": 0.5}
+            radius=15,
         )
-        self.prev_btn.bind(on_release=self.nav_previous)
+        prev_btn.bind(on_release=lambda x: self.nav_previous(x))
 
-        self.next_btn = KidButton(
-            bg_color=(0.2, 0.4, 0.7, 0.8),
-            text=">",
-            font_size=32,
+        next_btn = KidButton(
+            bg_color=(0.3, 0.6, 0.9, 1),
+            text="Next ▶",
+            font_size=16,
             bold=True,
-            color=(1, 1, 1, 1),
-            radius=20,
-            size_hint=(0.08, 0.16),
-            pos_hint={"right": 0.98, "center_y": 0.5}
+            radius=15,
         )
-        self.next_btn.bind(on_release=self.nav_next)
+        next_btn.bind(on_release=lambda x: self.nav_next(x))
 
-        root_layout.add_widget(self.prev_btn)
-        root_layout.add_widget(self.next_btn)
+        nav_layout.add_widget(prev_btn)
+        nav_layout.add_widget(next_btn)
+        card_layout.add_widget(nav_layout)
 
-        # Play initial sound on startup
-        self.play_current_sound()
+        return card_layout
 
-        return root_layout
+    def switch_view(self, mode):
+        """ Switches between Grid View and Card View """
+        if mode == self.current_view:
+            return
 
-    # --- LOGIC & EVENT HANDLERS ---
+        self.content_area.clear_widgets()
+        self.current_view = mode
+
+        if mode == "grid":
+            self.content_area.add_widget(self.grid_view)
+            self.grid_mode_btn.bg_color = (0.2, 0.6, 0.85, 1)
+            self.grid_mode_btn.update_rect(self.grid_mode_btn, None)
+            self.card_mode_btn.bg_color = (0.7, 0.7, 0.8, 1)
+            self.card_mode_btn.update_rect(self.card_mode_btn, None)
+            self.subtitle_label.text = "Tap any letter sound below to listen! 🔊"
+        else:
+            self.content_area.add_widget(self.card_view)
+            self.card_mode_btn.bg_color = (0.2, 0.6, 0.85, 1)
+            self.card_mode_btn.update_rect(self.card_mode_btn, None)
+            self.grid_mode_btn.bg_color = (0.7, 0.7, 0.8, 1)
+            self.grid_mode_btn.update_rect(self.grid_mode_btn, None)
+            self.subtitle_label.text = "Swipe or tap to hear the letter sound! 🔊"
+            self.play_current_card_sound()
 
     def switch_language(self, lang, button_instance):
         """ Margaret's Language Toggle Logic """
         button_instance.animate_bounce()
-        
+
         if self.current_language == lang:
-            return  # Already active
+            return
 
         self.current_language = lang
 
-        # Update button highlighting (Active = Blue, Inactive = Muted Grey)
         if lang == "en":
             self.btn_en.set_color((0.2, 0.5, 0.8, 1))
             self.btn_sw.set_color((0.6, 0.6, 0.6, 0.6))
@@ -194,12 +271,14 @@ class Tujisomee(App):
             self.btn_sw.set_color((0.2, 0.5, 0.8, 1))
             self.btn_en.set_color((0.6, 0.6, 0.6, 0.6))
 
-        # Re-play active letter in the newly selected language!
-        self.play_current_sound()
+        if self.current_view == "card":
+            self.play_current_card_sound()
 
-    def on_card_tap(self, instance):
-        instance.animate_bounce()
-        self.play_current_sound()
+    def play_letter_sound(self, letter, instance=None):
+        """ Plays audio file in active language """
+        if instance and hasattr(instance, 'animate_bounce'):
+            instance.animate_bounce()
+        play_sounds(letter, lang=self.current_language)
 
     def nav_previous(self, instance):
         instance.animate_bounce()
@@ -209,16 +288,16 @@ class Tujisomee(App):
         instance.animate_bounce()
         self.carousel.load_next()
 
-    def play_current_sound(self, *args):
-        """ Plays sound using selected language """
+    def play_current_card_sound(self, *args):
+        """ Triggers audio for active carousel card """
         current_slide_box = self.carousel.current_slide
         if current_slide_box:
             btn = current_slide_box.children[0]
-            letter = btn.text.lower()
-            play_sounds(letter, lang=self.current_language)
+            play_sounds(btn.text, lang=self.current_language)
 
     def on_slide_change(self, carousel, index):
-        self.play_current_sound()
+        if getattr(self, "current_view", None) == "card":
+            self.play_current_card_sound()
 
 
 if __name__ == "__main__":
