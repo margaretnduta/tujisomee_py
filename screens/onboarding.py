@@ -122,10 +122,14 @@ class OnboardingScreen(Screen):
     def start_learning(self, instance):
         instance.animate_bounce()
         app = App.get_running_app()
-        app.current_language = self.selected_language
         
-        # When main_app.py screen is added, we navigate using:
-        if self.manager.has_screen("main"):
-            self.manager.current = "main"
+        # 1. Save language state across the app (supports both attribute names)
+        app.current_language = self.selected_language
+        app.user_language = self.selected_language
+        
+        # 2. Slide left into Step 2 (Mode Selection)
+        if self.manager.has_screen("onboarding_step2"):
+            self.manager.transition.direction = 'left'
+            self.manager.current = "onboarding_step2"
         else:
-            print(f"Selected language: {app.current_language}. Main screen coming next!")
+            print(f"Selected language: {app.current_language}. onboarding_step2 screen not registered in main.py!")

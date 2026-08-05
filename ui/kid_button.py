@@ -32,8 +32,10 @@ class KidButton(Button):
         self.color_instruction.rgba = new_color
 
     def animate_bounce(self):
-        """ Plays a quick spring-bounce visual effect when tapped. """
-        orig_size = (self.size_hint_x, self.size_hint_y)
-        anim = Animation(size_hint=(orig_size[0] * 0.92, orig_size[1] * 0.92), duration=0.06)
-        anim += Animation(size_hint=orig_size, duration=0.12, t='out_bounce')
+        # Animate physical pixel size instead of size_hint to avoid NoneType errors
+        orig_w, orig_h = self.size
+
+        # Shrink by 8% then pop back to original size
+        anim = Animation(size=(orig_w * 0.92, orig_h * 0.92), duration=0.06) + \
+               Animation(size=(orig_w, orig_h), duration=0.06)
         anim.start(self)
