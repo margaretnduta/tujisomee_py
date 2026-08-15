@@ -3,13 +3,12 @@ from kivy.config import Config
 from kivy.uix.screenmanager import ScreenManager, SlideTransition
 from kivy.core.window import Window
 
-# Disable 'Esc' key exiting the app
 Config.set('kivy', 'exit_on_escape', '0')
 
-# Phase 1 Onboarding Screens
 from screens.onboarding import OnboardingScreen
 from screens.onboarding_step2 import OnboardingStep2Screen
 from screens.onboarding_step3 import OnboardingStep3Screen
+from screens.main_screen import MainScreen  # <-- 1. Import MainScreen
 
 
 class TujisomeeApp(App):
@@ -17,17 +16,15 @@ class TujisomeeApp(App):
     user_mode = 'grid'
 
     def build(self):
-        Window.size = (360, 640)  # Standard mobile aspect ratio preview
-        
-        # Prevent physical keypresses from crashing event loop
+        Window.size = (360, 640)
         Window.bind(on_key_down=lambda *args: None)
 
         sm = ScreenManager(transition=SlideTransition())
 
-        # Register Phase 1 Screens
         sm.add_widget(OnboardingScreen(name='onboarding'))
         sm.add_widget(OnboardingStep2Screen(name='onboarding_step2'))
         sm.add_widget(OnboardingStep3Screen(name='onboarding_step3'))
+        sm.add_widget(MainScreen(name='main'))  # <-- 2. Register MainScreen
 
         return sm
 
