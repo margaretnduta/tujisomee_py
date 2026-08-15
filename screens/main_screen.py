@@ -13,6 +13,9 @@ from utils.mp3 import play_sounds
 
 
 class MainScreen(Screen):
+    # App Primary Pink Palette Accent
+    PINK_ACCENT = (0.88, 0.55, 0.72, 1)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.current_card_index = 0
@@ -28,15 +31,16 @@ class MainScreen(Screen):
         ]
 
     def on_enter(self):
-        """Rebuilds screen dynamically whenever user returns or switches views."""
+        """Rebuilds UI dynamically whenever user enters or changes modes/languages."""
         self.clear_widgets()
         self.build_ui()
 
     def build_ui(self):
         app = App.get_running_app()
         mode = getattr(app, 'user_mode', 'grid')
+        current_lang = getattr(app, 'current_language', 'en')
         
-        # Screen Base Layout with Soft Pink Background
+        # Base Screen Layout
         main_layout = BoxLayout(
             orientation="vertical", 
             spacing=12, 
@@ -47,7 +51,7 @@ class MainScreen(Screen):
             self.bg_rect = RoundedRectangle(pos=main_layout.pos, size=main_layout.size)
         main_layout.bind(pos=self._update_bg, size=self._update_bg)
 
-        # 1. Header Bar
+        # 1. Top Header Bar
         header = BoxLayout(
             orientation="horizontal", 
             size_hint_y=None, 
@@ -56,7 +60,7 @@ class MainScreen(Screen):
             padding=[12, 6, 12, 6]
         )
         with header.canvas.before:
-            Color(1, 1, 1, 0.85)
+            Color(1, 1, 1, 0.95)
             header.bg_rect = RoundedRectangle(pos=header.pos, size=header.size, radius=[16])
         header.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
 
@@ -65,7 +69,7 @@ class MainScreen(Screen):
         header.add_widget(mascot)
 
         # App Title & Language Badge
-        lang_code = "English" if app.current_language == "en" else "Kiswahili"
+        lang_code = "English" if current_lang == "en" else "Kiswahili"
         title = Label(
             text=f"[b]Tujisomee[/b]  •  [size=13sp][color=D85888]{lang_code}[/color][/size]",
             markup=True,
@@ -77,21 +81,24 @@ class MainScreen(Screen):
         title.bind(size=title.setter('text_size'))
         header.add_widget(title)
 
-        # Settings Gear Button
+        # Dynamic Language / Settings Button styled with Primary Theme Pink
+        settings_text = "Lang" if current_lang == "en" else "Lugha"
         settings_btn = KidButton(
-            bg_color=(0.92, 0.92, 0.96, 1),
-            text="⚙️",
-            font_size="18sp",
+            bg_color=self.PINK_ACCENT,
+            text=f" {settings_text}",
+            font_size="12sp",
+            bold=True,
+            color=(1, 1, 1, 1),
             radius=12,
             size_hint=(None, 1),
-            width=48
+            width=75
         )
         settings_btn.bind(on_release=self.go_to_settings)
         header.add_widget(settings_btn)
 
         main_layout.add_widget(header)
 
-        # 2. Main Content Body
+        # 2. Body View Container (Grid vs Card)
         body_container = BoxLayout(size_hint_y=1)
         if mode == 'grid':
             body_container.add_widget(self.build_grid_view())
@@ -104,13 +111,10 @@ class MainScreen(Screen):
     # --- GRID VIEW BUILDER ---
     def build_grid_view(self):
         scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False, bar_width=4)
-        
-        # Grid with 4 columns and comfortable aspect proportions
         grid = GridLayout(cols=4, spacing=10, padding=[2, 8, 2, 8], size_hint_y=None)
         grid.bind(minimum_height=grid.setter("height"))
 
         for i, letter in enumerate(self.letters):
-            # Formats tiles as "A a" for early phonics visual association
             tile_btn = KidButton(
                 bg_color=self.colors[i % len(self.colors)],
                 text=f"{letter} {letter.lower()}",
@@ -133,7 +137,7 @@ class MainScreen(Screen):
         current_letter = self.letters[self.current_card_index]
         card_color = self.colors[self.current_card_index % len(self.colors)]
 
-        # Card Progress Counter Badge (e.g. 1 / 26)
+        # Counter Badge
         counter_label = Label(
             text=f"[b]{self.current_card_index + 1}[/b] / {len(self.letters)}",
             markup=True,
@@ -157,7 +161,7 @@ class MainScreen(Screen):
         self.card_btn.bind(on_release=lambda inst: self.play_letter_sound(inst, self.letters[self.current_card_index]))
         card_layout.add_widget(self.card_btn)
 
-        # Bottom Card Navigation Controls (< Previous | Next >)
+        # Navigation Controls (< Previous | Next >)
         nav_controls = BoxLayout(size_hint=(1, 0.16), spacing=15)
         
         prev_btn = KidButton(
@@ -171,10 +175,11 @@ class MainScreen(Screen):
         prev_btn.bind(on_release=self.prev_card)
 
         next_btn = KidButton(
-            bg_color=(0.88, 0.55, 0.72, 1),
+            bg_color=self.PINK_ACCENT,
             text=">",
             font_size="26sp",
             bold=True,
+            color=(1, 1, 1, 1),
             radius=18
         )
         next_btn.bind(on_release=self.next_card)
@@ -185,7 +190,7 @@ class MainScreen(Screen):
 
         return card_layout
 
-    # --- CANVAS & EVENT HANDLERS ---
+    # --- CANVAS & ACTION HANDLERS ---
     def _update_bg(self, instance, value):
         self.bg_rect.pos = instance.pos
         self.bg_rect.size = instance.size
@@ -206,12 +211,16 @@ class MainScreen(Screen):
             instance.animate_bounce()
         self.current_card_index = (self.current_card_index + 1) % len(self.letters)
         self.on_enter()
+        app = App.get_running_app()
+        play_sounds(self.letters[self.current_card_index], lang=getattr(app, 'current_language', 'en'))
 
     def prev_card(self, instance):
         if hasattr(instance, 'animate_bounce'):
             instance.animate_bounce()
         self.current_card_index = (self.current_card_index - 1) % len(self.letters)
         self.on_enter()
+        app = App.get_running_app()
+        play_sounds(self.letters[self.current_card_index], lang=getattr(app, 'current_language', 'en'))
 
     def go_to_settings(self, instance):
         if hasattr(instance, 'animate_bounce'):
