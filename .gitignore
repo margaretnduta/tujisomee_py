@@ -9,3 +9,6 @@ kivy_venv
 dist/
 build/
 *.spec
+# Local runtime user settings
+# below  was created by the storage.py
+user_settings.json 

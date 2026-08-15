@@ -6,6 +6,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.image import Image
+from kivy.uix.spinner import Spinner
 from kivy.graphics import Color, RoundedRectangle
 
 from ui.kid_button import KidButton
@@ -13,7 +14,6 @@ from utils.mp3 import play_sounds
 
 
 class MainScreen(Screen):
-    # App Primary Pink Palette Accent
     PINK_ACCENT = (0.88, 0.55, 0.72, 1)
 
     def __init__(self, **kwargs):
@@ -21,7 +21,6 @@ class MainScreen(Screen):
         self.current_card_index = 0
         self.letters = list(string.ascii_uppercase)
         
-        # Kid-friendly soft pastel color palette
         self.colors = [
             (0.38, 0.72, 0.96, 1),  # Sky Blue
             (0.98, 0.76, 0.30, 1),  # Warm Sun Yellow
@@ -31,7 +30,6 @@ class MainScreen(Screen):
         ]
 
     def on_enter(self):
-        """Rebuilds UI dynamically whenever user enters or changes modes/languages."""
         self.clear_widgets()
         self.build_ui()
 
@@ -40,11 +38,11 @@ class MainScreen(Screen):
         mode = getattr(app, 'user_mode', 'grid')
         current_lang = getattr(app, 'current_language', 'en')
         
-        # Base Screen Layout
+        # Main Layout Structure
         main_layout = BoxLayout(
             orientation="vertical", 
-            spacing=12, 
-            padding=[16, 12, 16, 12]
+            spacing=10, 
+            padding=[16, 10, 16, 10]
         )
         with main_layout.canvas.before:
             Color(0.98, 0.93, 0.96, 1.0)
@@ -55,25 +53,23 @@ class MainScreen(Screen):
         header = BoxLayout(
             orientation="horizontal", 
             size_hint_y=None, 
-            height=60, 
-            spacing=10, 
-            padding=[12, 6, 12, 6]
+            height=56, 
+            spacing=8, 
+            padding=[10, 6, 10, 6]
         )
         with header.canvas.before:
             Color(1, 1, 1, 0.95)
             header.bg_rect = RoundedRectangle(pos=header.pos, size=header.size, radius=[16])
         header.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
 
-        # Mascot Logo
-        mascot = Image(source="assets/logo.png", fit_mode="contain", size_hint=(None, 1), width=40)
+        mascot = Image(source="assets/logo.png", fit_mode="contain", size_hint=(None, 1), width=36)
         header.add_widget(mascot)
 
-        # App Title & Language Badge
         lang_code = "English" if current_lang == "en" else "Kiswahili"
         title = Label(
-            text=f"[b]Tujisomee[/b]  •  [size=13sp][color=D85888]{lang_code}[/color][/size]",
+            text=f"[b]Tujisomee[/b]  •  [size=10sp][color=D85888]{lang_code}[/color][/size]",
             markup=True,
-            font_size="17sp",
+            font_size="16sp",
             color=(0.2, 0.2, 0.3, 1),
             halign="left",
             valign="middle"
@@ -81,37 +77,71 @@ class MainScreen(Screen):
         title.bind(size=title.setter('text_size'))
         header.add_widget(title)
 
-        # Dynamic Language / Settings Button styled with Primary Theme Pink
-        settings_text = "Lang" if current_lang == "en" else "Lugha"
-        settings_btn = KidButton(
-            bg_color=self.PINK_ACCENT,
-            text=f" {settings_text}",
-            font_size="12sp",
-            bold=True,
-            color=(1, 1, 1, 1),
-            radius=12,
+        # --- REQUIREMENT 1: Language Dropdown Selector ---
+        lang_spinner = Spinner(
+            text="English " if current_lang == "en" else "Kiswahili ",
+            values=("English ", "Kiswahili "),
             size_hint=(None, 1),
-            width=75
+            width=110,
+            background_normal='',
+            background_color=self.PINK_ACCENT,
+            color=(1, 1, 1, 1),
+            font_size="11sp",
+            bold=True
         )
-        settings_btn.bind(on_release=self.go_to_settings)
-        header.add_widget(settings_btn)
+        lang_spinner.bind(text=self.on_language_change)
+        header.add_widget(lang_spinner)
 
         main_layout.add_widget(header)
 
-        # 2. Body View Container (Grid vs Card)
-        body_container = BoxLayout(size_hint_y=1)
+        # 2. Body View Container
+        body_container = BoxLayout(size_hint_y=0.82)
         if mode == 'grid':
             body_container.add_widget(self.build_grid_view())
         else:
             body_container.add_widget(self.build_card_view())
-
         main_layout.add_widget(body_container)
+
+        # --- REQUIREMENT 3: Home Icon Bottom Navigation Bar ---
+        footer_nav = BoxLayout(
+            orientation="horizontal", 
+            size_hint_y=None, 
+            height=54, 
+            padding=[8, 4, 8, 4]
+        )
+        with footer_nav.canvas.before:
+            Color(1, 1, 1, 0.95)
+            footer_nav.bg_rect = RoundedRectangle(pos=footer_nav.pos, size=footer_nav.size, radius=[18])
+        footer_nav.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
+
+        home_label = "Mwanzo" if current_lang == "sw" else "Home"
+        home_btn = KidButton(
+            bg_color=self.PINK_ACCENT,
+            text=f"  {home_label}",
+            font_size="14sp",
+            bold=True,
+            color=(1, 1, 1, 1),
+            radius=14,
+            size_hint=(1, 1)
+        )
+        home_btn.bind(on_release=self.go_to_onboarding)
+        footer_nav.add_widget(home_btn)
+
+        main_layout.add_widget(footer_nav)
         self.add_widget(main_layout)
 
-    # --- GRID VIEW BUILDER ---
+    # --- DROPDOWN EVENT HANDLER ---
+    def on_language_change(self, spinner, text):
+        new_lang = "en" if "English" in text else "sw"
+        app = App.get_running_app()
+        if app.current_language != new_lang:
+            app.update_language(new_lang)  # Updates state + saves to storage
+            self.on_enter()  # Re-renders screen instantly
+
+    # --- GRID & CARD BUILDERS ---
     def build_grid_view(self):
         scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False, bar_width=4)
-        grid = GridLayout(cols=4, spacing=10, padding=[2, 8, 2, 8], size_hint_y=None)
+        grid = GridLayout(cols=4, spacing=10, padding=[2, 6, 2, 6], size_hint_y=None)
         grid.bind(minimum_height=grid.setter("height"))
 
         for i, letter in enumerate(self.letters):
@@ -122,7 +152,7 @@ class MainScreen(Screen):
                 bold=True,
                 radius=16,
                 size_hint_y=None,
-                height=90
+                height=85
             )
             tile_btn.bind(on_release=lambda inst, l=letter: self.play_letter_sound(inst, l))
             grid.add_widget(tile_btn)
@@ -130,57 +160,53 @@ class MainScreen(Screen):
         scroll.add_widget(grid)
         return scroll
 
-    # --- CARD VIEW BUILDER ---
     def build_card_view(self):
-        card_layout = BoxLayout(orientation="vertical", spacing=12, padding=[4, 4])
+        card_layout = BoxLayout(orientation="vertical", spacing=10, padding=[2, 2])
 
         current_letter = self.letters[self.current_card_index]
         card_color = self.colors[self.current_card_index % len(self.colors)]
 
-        # Counter Badge
         counter_label = Label(
             text=f"[b]{self.current_card_index + 1}[/b] / {len(self.letters)}",
             markup=True,
-            font_size="14sp",
+            font_size="13sp",
             color=(0.5, 0.4, 0.5, 1),
             size_hint_y=None,
-            height=20
+            height=18
         )
         card_layout.add_widget(counter_label)
 
-        # Giant Flashcard
         self.card_btn = KidButton(
             bg_color=card_color,
-            text=f"{current_letter}\n[size=48sp]{current_letter.lower()}[/size]",
+            text=f"{current_letter}\n[size=44sp]{current_letter.lower()}[/size]",
             markup=True,
-            font_size="72sp",
+            font_size="68sp",
             bold=True,
-            radius=28,
-            size_hint=(1, 0.8)
+            radius=26,
+            size_hint=(1, 0.78)
         )
         self.card_btn.bind(on_release=lambda inst: self.play_letter_sound(inst, self.letters[self.current_card_index]))
         card_layout.add_widget(self.card_btn)
 
-        # Navigation Controls (< Previous | Next >)
-        nav_controls = BoxLayout(size_hint=(1, 0.16), spacing=15)
+        nav_controls = BoxLayout(size_hint=(1, 0.18), spacing=15)
         
         prev_btn = KidButton(
             bg_color=(1, 1, 1, 0.95),
             text="<",
-            font_size="26sp",
+            font_size="24sp",
             bold=True,
             color=(0.4, 0.4, 0.5, 1),
-            radius=18
+            radius=16
         )
         prev_btn.bind(on_release=self.prev_card)
 
         next_btn = KidButton(
             bg_color=self.PINK_ACCENT,
             text=">",
-            font_size="26sp",
+            font_size="24sp",
             bold=True,
             color=(1, 1, 1, 1),
-            radius=18
+            radius=16
         )
         next_btn.bind(on_release=self.next_card)
 
@@ -190,7 +216,7 @@ class MainScreen(Screen):
 
         return card_layout
 
-    # --- CANVAS & ACTION HANDLERS ---
+    # --- CANVAS & NAVIGATION HANDLERS ---
     def _update_bg(self, instance, value):
         self.bg_rect.pos = instance.pos
         self.bg_rect.size = instance.size
@@ -222,7 +248,7 @@ class MainScreen(Screen):
         app = App.get_running_app()
         play_sounds(self.letters[self.current_card_index], lang=getattr(app, 'current_language', 'en'))
 
-    def go_to_settings(self, instance):
+    def go_to_onboarding(self, instance):
         if hasattr(instance, 'animate_bounce'):
             instance.animate_bounce()
         self.manager.transition.direction = 'right'
