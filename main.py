@@ -5,6 +5,10 @@ from screens.onboarding import OnboardingScreen
 from screens.main_app import MainScreen
 from screens.onboarding_step2 import OnboardingStep2Screen
 from screens.onboarding_step3 import OnboardingStep3Screen
+from kivy.core.window import Window
+
+
+Window.bind(on_key_down=lambda *args: None)
 
 class Tujisomee(App):
     def build(self):
