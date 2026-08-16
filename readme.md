@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Tujisomee Logo" width="120" />
+  <img src="assets/logo.png" alt="Tujisomee Logo" width="500" />
 </p>
-# Tujisomee Phonics
+
 
 **Tujisomee Phonics** is a vibrant, interactive, and child-friendly educational application built with Python and Kivy. Designed specifically for early childhood literacy, the app helps young children master letter sounds (A–Z) in both **English** and **Kiswahili** through dual learning views, tactile bounce animations, and instant audio feedback.
 
