@@ -1,23 +1,55 @@
-import string
+import asyncio
 import os
-from gtts import gTTS
+import string
+import edge_tts
 
-# Target directory for Swahili audio
-sw_folder = os.path.join("mp3", "sw")
-os.makedirs(sw_folder, exist_ok=True)
+# Target Kenyan Swahili neural voice
+VOICE = "sw-KE-ZuriNeural"
+OUTPUT_DIR = "assets/mp3"
 
-print("Generating Swahili (Kiswahili) audio files for A through Z...")
+# Letter sounds/pronunciations mapped for Kenyan phonics
+SWAHILI_PRONUNCIATION = {
+    'A': 'A',
+    'B': 'Ba',
+    'C': 'Cha',
+    'D': 'Da',
+    'E': 'E',
+    'F': 'Fa',
+    'G': 'Ga',
+    'H': 'Ha',
+    'I': 'I',
+    'J': 'Ja',
+    'K': 'Ka',
+    'L': 'La',
+    'M': 'Ma',
+    'N': 'Na',
+    'O': 'O',
+    'P': 'Pa',
+    'Q': 'Kwa',
+    'R': 'Ra',
+    'S': 'Sa',
+    'T': 'Ta',
+    'U': 'U',
+    'V': 'Va',
+    'W': 'Wa',
+    'X': 'Ksa',
+    'Y': 'Ya',
+    'Z': 'Za'
+}
 
-for letter in string.ascii_lowercase:
-    file_path = os.path.join(sw_folder, f"{letter}.mp3")
-    
-    if os.path.exists(file_path):
-        print(f"Skipping {file_path} (Already exists)")
-        continue
-        
-    # Generate Swahili pronunciation
-    tts = gTTS(text=letter, lang='sw')
-    tts.save(file_path)
-    print(f"Created: {file_path}")
 
-print("\nSuccess! All Kiswahili audio files are ready in mp3/sw/")
+async def generate_audio():
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    print("Generating Kenyan Swahili audio files...")
+
+    for letter, spoken_text in SWAHILI_PRONUNCIATION.items():
+        filename = f"{OUTPUT_DIR}/{letter.lower()}.mp3"
+        communicate = edge_tts.Communicate(spoken_text, VOICE)
+        await communicate.save(filename)
+        print(f"Saved: {filename} (Text: '{spoken_text}')")
+
+    print("All Kenyan Swahili audio assets generated successfully.")
+
+
+if __name__ == "__main__":
+    asyncio.run(generate_audio())

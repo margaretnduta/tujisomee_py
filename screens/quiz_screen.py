@@ -11,6 +11,7 @@ from kivy.graphics import Color, RoundedRectangle
 
 from ui.kid_button import KidButton
 from utils.mp3 import play_sounds
+from utils.sound_fx import play_sfx
 
 
 class QuizScreen(Screen):
@@ -23,17 +24,16 @@ class QuizScreen(Screen):
         self.options = []
         
         self.colors = [
-            (0.38, 0.72, 0.96, 1),  # Blue
-            (0.98, 0.76, 0.30, 1),  # Yellow
-            (0.96, 0.48, 0.44, 1),  # Coral Red
-            (0.48, 0.82, 0.48, 1)   # Green
+            (0.38, 0.72, 0.96, 1),
+            (0.98, 0.76, 0.30, 1),
+            (0.96, 0.48, 0.44, 1),
+            (0.48, 0.82, 0.48, 1)
         ]
 
     def on_enter(self):
         self.next_question()
 
     def generate_options(self):
-        """Pick 1 target letter and 3 random distractors."""
         self.target_letter = random.choice(self.letters)
         wrong_letters = [l for l in self.letters if l != self.target_letter]
         self.options = random.sample(wrong_letters, 3) + [self.target_letter]
@@ -44,7 +44,6 @@ class QuizScreen(Screen):
         self.clear_widgets()
         self.build_ui()
         
-        # Play target letter audio automatically on question start
         app = App.get_running_app()
         play_sounds(self.target_letter, lang=getattr(app, 'current_language', 'en'))
 
@@ -63,7 +62,7 @@ class QuizScreen(Screen):
             self.bg_rect = RoundedRectangle(pos=main_layout.pos, size=main_layout.size)
         main_layout.bind(pos=self._update_bg, size=self._update_bg)
 
-        # 1. Header Bar with Star Counter
+        # Header Bar
         header = BoxLayout(
             orientation="horizontal", 
             size_hint_y=None, 
@@ -75,9 +74,6 @@ class QuizScreen(Screen):
             Color(1, 1, 1, 0.95)
             header.bg_rect = RoundedRectangle(pos=header.pos, size=header.size, radius=[16])
         header.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
-
-        mascot = Image(source="assets/logo.png", fit_mode="contain", size_hint=(None, 1), width=36)
-        header.add_widget(mascot)
 
         title_text = "Mchezo wa Herufi" if current_lang == "sw" else "Find the Letter"
         title = Label(
@@ -91,7 +87,6 @@ class QuizScreen(Screen):
         title.bind(size=title.setter('text_size'))
         header.add_widget(title)
 
-        # Star Counter Badge
         star_badge = Label(
             text=f"[b]{stars}[/b]",
             markup=True,
@@ -101,43 +96,51 @@ class QuizScreen(Screen):
             width=65
         )
         header.add_widget(star_badge)
-
         main_layout.add_widget(header)
 
-        # 2. Audio Replay Prompt
-        prompt_card = BoxLayout(orientation="vertical", size_hint_y=0.35, spacing=6, padding=[10, 10])
-        with prompt_card.canvas.before:
-            Color(1, 1, 1, 0.8)
-            prompt_card.bg_rect = RoundedRectangle(pos=prompt_card.pos, size=prompt_card.size, radius=[20])
-        prompt_card.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
+        # Mascot Speech Bubble Card
+        mascot_card = BoxLayout(orientation="horizontal", size_hint_y=0.32, spacing=10, padding=[12, 8])
+        with mascot_card.canvas.before:
+            Color(1, 1, 1, 0.9)
+            mascot_card.bg_rect = RoundedRectangle(pos=mascot_card.pos, size=mascot_card.size, radius=[20])
+        mascot_card.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
 
-        instruction = "Tafuta herufi hii:" if current_lang == "sw" else "Which letter makes this sound?"
-        instr_label = Label(
-            text=instruction,
-            font_size="14sp",
-            color=(0.4, 0.4, 0.5, 1),
-            size_hint_y=None,
-            height=24
+        mascot_img = Image(source="assets/logo.png", fit_mode="contain", size_hint=(0.3, 1))
+        mascot_card.add_widget(mascot_img)
+
+        speech_box = BoxLayout(orientation="vertical", size_hint=(0.7, 1), spacing=4)
+        
+        self.speech_msg = getattr(self, 'speech_msg_text', None)
+        default_speech = "Unaijua herufi hii? Tega sikio" if current_lang == "sw" else "Can you find this sound? Listen carefully"
+        
+        self.speech_label = Label(
+            text=f"[i]\"{self.speech_msg or default_speech}\"[/i]",
+            markup=True,
+            font_size="13sp",
+            color=(0.3, 0.3, 0.4, 1),
+            halign="left",
+            valign="middle"
         )
-        prompt_card.add_widget(instr_label)
+        self.speech_label.bind(size=self.speech_label.setter('text_size'))
+        speech_box.add_widget(self.speech_label)
 
         replay_btn = KidButton(
             bg_color=self.PINK_ACCENT,
-            text="Replay Sound",
-            font_size="16sp",
+            text="Replay" if current_lang == "en" else "Sikiliza",
+            font_size="13sp",
             bold=True,
             color=(1, 1, 1, 1),
-            radius=16,
-            size_hint=(0.8, 0.6),
-            pos_hint={'center_x': 0.5}
+            radius=12,
+            size_hint=(1, 0.45)
         )
-        replay_btn.bind(on_release=lambda inst: self.replay_target_sound(inst))
-        prompt_card.add_widget(replay_btn)
+        replay_btn.bind(on_release=self.replay_target_sound)
+        speech_box.add_widget(replay_btn)
 
-        main_layout.add_widget(prompt_card)
+        mascot_card.add_widget(speech_box)
+        main_layout.add_widget(mascot_card)
 
-        # 3. 2x2 Option Choices Grid
-        grid = GridLayout(cols=2, spacing=12, size_hint_y=0.5)
+        # 2x2 Choice Grid
+        grid = GridLayout(cols=2, spacing=12, size_hint_y=0.53)
         for i, option_letter in enumerate(self.options):
             card_btn = KidButton(
                 bg_color=self.colors[i % len(self.colors)],
@@ -152,14 +155,8 @@ class QuizScreen(Screen):
 
         main_layout.add_widget(grid)
 
-        # 4. Bottom Navigation Controls
-        footer_nav = BoxLayout(
-            orientation="horizontal", 
-            size_hint_y=None, 
-            height=54, 
-            spacing=10,
-            padding=[8, 4, 8, 4]
-        )
+        # Navigation Footer
+        footer_nav = BoxLayout(orientation="horizontal", size_hint_y=None, height=52, spacing=10, padding=[8, 4])
         with footer_nav.canvas.before:
             Color(1, 1, 1, 0.95)
             footer_nav.bg_rect = RoundedRectangle(pos=footer_nav.pos, size=footer_nav.size, radius=[18])
@@ -193,24 +190,32 @@ class QuizScreen(Screen):
 
         self.add_widget(main_layout)
 
-    # --- GAME LOGIC ---
     def check_answer(self, instance, picked_letter):
         if hasattr(instance, 'animate_bounce'):
             instance.animate_bounce()
 
+        app = App.get_running_app()
+        lang = getattr(app, 'current_language', 'en')
+
         if picked_letter == self.target_letter:
-            # Correct answer: award star and load next question
-            app = App.get_running_app()
+            play_sfx("correct")
+            play_sfx("star")
             app.add_star()
-            instance.bg_color = (0.3, 0.8, 0.4, 1)  # Flash green
-            Clock.schedule_once(self.next_question, 0.6)
+            
+            praise = "Safiri sana Umepatia" if lang == "sw" else "Awesome job  You got a star"
+            self.speech_msg_text = praise
+            instance.bg_color = (0.3, 0.8, 0.4, 1)
+            Clock.schedule_once(self.next_question, 0.8)
         else:
-            # Wrong answer: flash red briefly
+            play_sfx("wrong")
+            retry_msg = "Jaribu tena  Unaweza" if lang == "sw" else "Oops Try another one"
+            self.speech_label.text = f"[i]\"{retry_msg}\"[/i]"
             instance.bg_color = (0.9, 0.3, 0.3, 1)
 
     def replay_target_sound(self, instance):
         if hasattr(instance, 'animate_bounce'):
             instance.animate_bounce()
+        play_sfx("click")
         app = App.get_running_app()
         play_sounds(self.target_letter, lang=getattr(app, 'current_language', 'en'))
 
@@ -224,13 +229,11 @@ class QuizScreen(Screen):
             instance.bg_rect.size = instance.size
 
     def go_to_learn(self, instance):
-        if hasattr(instance, 'animate_bounce'):
-            instance.animate_bounce()
+        play_sfx("click")
         self.manager.transition.direction = 'right'
         self.manager.current = 'main'
 
     def go_to_onboarding(self, instance):
-        if hasattr(instance, 'animate_bounce'):
-            instance.animate_bounce()
+        play_sfx("click")
         self.manager.transition.direction = 'right'
         self.manager.current = 'onboarding'
