@@ -9,26 +9,30 @@ from screens.onboarding import OnboardingScreen
 from screens.onboarding_step2 import OnboardingStep2Screen
 from screens.onboarding_step3 import OnboardingStep3Screen
 from screens.main_screen import MainScreen
+from screens.quiz_screen import QuizScreen
 from utils.storage import load_settings, save_settings
 
 
 class TujisomeeApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Load stored settings on launch
         settings = load_settings()
         self.current_language = settings.get("current_language", "en")
         self.user_mode = settings.get("user_mode", "grid")
+        self.stars = settings.get("stars", 0)
 
     def update_language(self, lang_code):
-        """Updates language in state and persists to storage."""
         self.current_language = lang_code
         save_settings({"current_language": lang_code})
 
     def update_mode(self, mode):
-        """Updates mode in state and persists to storage."""
         self.user_mode = mode
         save_settings({"user_mode": mode})
+
+    def add_star(self):
+        """Increments star counter and saves state."""
+        self.stars += 1
+        save_settings({"stars": self.stars})
 
     def build(self):
         Window.size = (360, 640)
@@ -40,6 +44,7 @@ class TujisomeeApp(App):
         sm.add_widget(OnboardingStep2Screen(name='onboarding_step2'))
         sm.add_widget(OnboardingStep3Screen(name='onboarding_step3'))
         sm.add_widget(MainScreen(name='main'))
+        sm.add_widget(QuizScreen(name='quiz'))
 
         return sm
 

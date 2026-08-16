@@ -22,11 +22,11 @@ class MainScreen(Screen):
         self.letters = list(string.ascii_uppercase)
         
         self.colors = [
-            (0.38, 0.72, 0.96, 1),  # Sky Blue
-            (0.98, 0.76, 0.30, 1),  # Warm Sun Yellow
-            (0.96, 0.48, 0.44, 1),  # Soft Coral Red
-            (0.48, 0.82, 0.48, 1),  # Fresh Green
-            (0.78, 0.52, 0.88, 1)   # Lavender Purple
+            (0.38, 0.72, 0.96, 1),
+            (0.98, 0.76, 0.30, 1),
+            (0.96, 0.48, 0.44, 1),
+            (0.48, 0.82, 0.48, 1),
+            (0.78, 0.52, 0.88, 1)
         ]
 
     def on_enter(self):
@@ -37,8 +37,8 @@ class MainScreen(Screen):
         app = App.get_running_app()
         mode = getattr(app, 'user_mode', 'grid')
         current_lang = getattr(app, 'current_language', 'en')
+        stars = getattr(app, 'stars', 0)
         
-        # Main Layout Structure
         main_layout = BoxLayout(
             orientation="vertical", 
             spacing=10, 
@@ -49,12 +49,12 @@ class MainScreen(Screen):
             self.bg_rect = RoundedRectangle(pos=main_layout.pos, size=main_layout.size)
         main_layout.bind(pos=self._update_bg, size=self._update_bg)
 
-        # 1. Top Header Bar
+        # 1. Header Bar with Star Badge
         header = BoxLayout(
             orientation="horizontal", 
             size_hint_y=None, 
             height=56, 
-            spacing=8, 
+            spacing=6, 
             padding=[10, 6, 10, 6]
         )
         with header.canvas.before:
@@ -62,27 +62,26 @@ class MainScreen(Screen):
             header.bg_rect = RoundedRectangle(pos=header.pos, size=header.size, radius=[16])
         header.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
 
-        mascot = Image(source="assets/logo.png", fit_mode="contain", size_hint=(None, 1), width=36)
+        mascot = Image(source="assets/logo.png", fit_mode="contain", size_hint=(None, 1), width=32)
         header.add_widget(mascot)
 
-        lang_code = "English" if current_lang == "en" else "Kiswahili"
-        title = Label(
-            text=f"[b]Tujisomee[/b]  •  [size=10sp][color=D85888]{lang_code}[/color][/size]",
+        # Star Counter
+        star_badge = Label(
+            text=f"[b]{stars}[/b]",
             markup=True,
-            font_size="16sp",
-            color=(0.2, 0.2, 0.3, 1),
-            halign="left",
-            valign="middle"
+            font_size="14sp",
+            color=(0.9, 0.6, 0.1, 1),
+            size_hint=(None, 1),
+            width=50
         )
-        title.bind(size=title.setter('text_size'))
-        header.add_widget(title)
+        header.add_widget(star_badge)
 
-        # --- REQUIREMENT 1: Language Dropdown Selector ---
+        # Language Selector Dropdown
         lang_spinner = Spinner(
             text="English " if current_lang == "en" else "Kiswahili ",
             values=("English ", "Kiswahili "),
             size_hint=(None, 1),
-            width=110,
+            width=105,
             background_normal='',
             background_color=self.PINK_ACCENT,
             color=(1, 1, 1, 1),
@@ -102,11 +101,12 @@ class MainScreen(Screen):
             body_container.add_widget(self.build_card_view())
         main_layout.add_widget(body_container)
 
-        # --- REQUIREMENT 3: Home Icon Bottom Navigation Bar ---
+        # 3. Footer Navigation Bar (Quiz + Home Actions)
         footer_nav = BoxLayout(
             orientation="horizontal", 
             size_hint_y=None, 
             height=54, 
+            spacing=10,
             padding=[8, 4, 8, 4]
         )
         with footer_nav.canvas.before:
@@ -114,31 +114,41 @@ class MainScreen(Screen):
             footer_nav.bg_rect = RoundedRectangle(pos=footer_nav.pos, size=footer_nav.size, radius=[18])
         footer_nav.bind(pos=self._update_widget_bg, size=self._update_widget_bg)
 
-        home_label = "Mwanzo" if current_lang == "sw" else "Home"
-        home_btn = KidButton(
-            bg_color=self.PINK_ACCENT,
-            text=f"  {home_label}",
-            font_size="14sp",
+        quiz_btn = KidButton(
+            bg_color=(0.48, 0.82, 0.48, 1),
+            text=" Quiz" if current_lang == "en" else " Mchezo",
+            font_size="13sp",
             bold=True,
             color=(1, 1, 1, 1),
             radius=14,
-            size_hint=(1, 1)
+            size_hint=(0.5, 1)
+        )
+        quiz_btn.bind(on_release=self.go_to_quiz)
+
+        home_btn = KidButton(
+            bg_color=self.PINK_ACCENT,
+            text="Home" if current_lang == "en" else "Mwanzo",
+            font_size="13sp",
+            bold=True,
+            color=(1, 1, 1, 1),
+            radius=14,
+            size_hint=(0.5, 1)
         )
         home_btn.bind(on_release=self.go_to_onboarding)
+
+        footer_nav.add_widget(quiz_btn)
         footer_nav.add_widget(home_btn)
 
         main_layout.add_widget(footer_nav)
         self.add_widget(main_layout)
 
-    # --- DROPDOWN EVENT HANDLER ---
     def on_language_change(self, spinner, text):
         new_lang = "en" if "English" in text else "sw"
         app = App.get_running_app()
         if app.current_language != new_lang:
-            app.update_language(new_lang)  # Updates state + saves to storage
-            self.on_enter()  # Re-renders screen instantly
+            app.update_language(new_lang)
+            self.on_enter()
 
-    # --- GRID & CARD BUILDERS ---
     def build_grid_view(self):
         scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False, bar_width=4)
         grid = GridLayout(cols=4, spacing=10, padding=[2, 6, 2, 6], size_hint_y=None)
@@ -216,7 +226,6 @@ class MainScreen(Screen):
 
         return card_layout
 
-    # --- CANVAS & NAVIGATION HANDLERS ---
     def _update_bg(self, instance, value):
         self.bg_rect.pos = instance.pos
         self.bg_rect.size = instance.size
@@ -247,6 +256,12 @@ class MainScreen(Screen):
         self.on_enter()
         app = App.get_running_app()
         play_sounds(self.letters[self.current_card_index], lang=getattr(app, 'current_language', 'en'))
+
+    def go_to_quiz(self, instance):
+        if hasattr(instance, 'animate_bounce'):
+            instance.animate_bounce()
+        self.manager.transition.direction = 'left'
+        self.manager.current = 'quiz'
 
     def go_to_onboarding(self, instance):
         if hasattr(instance, 'animate_bounce'):

@@ -5,11 +5,12 @@ SETTINGS_FILE = "user_settings.json"
 
 DEFAULT_SETTINGS = {
     "current_language": "en",
-    "user_mode": "grid"
+    "user_mode": "grid",
+    "stars": 0
 }
 
 def load_settings():
-    """Loads user preferences from JSON storage."""
+    """Loads user preferences and star count from JSON storage."""
     if os.path.exists(SETTINGS_FILE):
         try:
             with open(SETTINGS_FILE, "r") as f:
@@ -19,7 +20,7 @@ def load_settings():
     return DEFAULT_SETTINGS.copy()
 
 def save_settings(data):
-    """Saves user preferences to JSON storage."""
+    """Saves user preferences and star count to JSON storage."""
     try:
         current = load_settings()
         current.update(data)
